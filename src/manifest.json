@@ -4,14 +4,14 @@
   "commands": [
     {
       "name": "my-command",
-      "identifier": "newskit-styles-to-json.my-command-identifier",
+      "identifier": "sketch-newskit.my-command-identifier",
       "script": "./my-command.js"
     }
   ],
   "menu": {
-    "title": "newskit-styles-to-json",
+    "title": "sketch-newskit",
     "items": [
-      "newskit-styles-to-json.my-command-identifier"
+      "sketch-newskit.my-command-identifier"
     ]
   }
 }

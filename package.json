@@ -1,14 +1,14 @@
 {
-  "name": "newskit-styles-to-json",
+  "name": "sketch-newskit",
   "description": "",
   "version": "0.1.0",
   "engines": {
     "sketch": ">=49.0"
   },
   "skpm": {
-    "name": "newskit-styles-to-json",
+    "name": "sketch-newskit",
     "manifest": "src/manifest.json",
-    "main": "newskit-styles-to-json.sketchplugin",
+    "main": "sketch-newskit.sketchplugin",
     "assets": [
       "assets/**/*"
     ],

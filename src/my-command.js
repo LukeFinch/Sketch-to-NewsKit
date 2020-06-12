@@ -2,6 +2,12 @@ var sketch = require('sketch')
 var Document = require('sketch/dom').Document
 var document = Document.getSelectedDocument()
 
+const fs = require('@skpm/fs');
+const path = require('@skpm/path');
+const home = require("os").homedir();
+const exportPath = `${home}/SketchJSON/`
+
+
 var texts = []
 var paints = []
 var shadows = []
@@ -37,6 +43,99 @@ export default function () {
   }
 
 
+  /* Get the primitive colours that form all the foundations */
+  var colourPalette = {}
+  var colourStyles = getSharedStyles(0).filter(style => style.name().includes('ExtendedPalette') || style.name().includes('Overlays') && !style.name().includes('border'))
+
+  colourStyles.forEach(style => {
+  var value
+  var name = style.name().split('/')[style.name().split('/').length -1]
+  let fills = style.style().fills()
+      if(!fills.length){
+      value = "transparent"
+      }else{
+          let fill = fills[0]
+          if(fill.fillType() == 0){
+              value = MSColorToRGBA(fill.color())
+              }else{
+                  value = parseGradient(fill.gradient())
+              }
+            }
+      colourPalette[name] = value
+  })
+
+  if (!fs.existsSync(exportPath)){
+    fs.mkdirSync(exportPath);
+}
+
+  try {
+    fs.writeFileSync(exportPath+'colour-palette.json', JSON.stringify(colourPalette,null,4));
+  } catch(err) {
+    // An error occurred
+    console.error(err);
+  }
+
+   /* Get the theme colours, where a option is given a decision */
+
+  //Filter out styles that aren't fills.
+  const regex = RegExp('(0[12345])', 'g')
+  var themeColours = getSharedStyles(0).filter(style => style.name().split('/')[0] && 
+  !style.name().includes('border') &&
+  !style.name().includes('Shadows') &&
+  !style.name().includes('Images') && 
+  !style.name().includes('ExtendedPalette'))
+
+  var  outputThemeColours = {}
+
+  themeColours.forEach(style => {
+    
+    let value
+    var name = style.name().split('/')[style.name().split('/').length -1]
+    let fills = style.style().fills()
+        if(!fills.length){
+        value = "transparent"
+        }else{
+            let fill = fills[0]
+            if(fill.fillType() == 0){
+                value = getPrimitiveFromColor(fill.color(),name)
+                }else{
+                    value = parseGradient(fill.gradient())
+                }
+              }
+              
+      outputThemeColours[name] = value || "undefined for some fucking reason"
+  })
+
+
+  try {
+    fs.writeFileSync(exportPath+'theme-colours.json', JSON.stringify(outputThemeColours,null,4));
+  } catch(err) {
+    // An error occurred
+    console.error(err);
+  }
+
+
+
+
+
+
+  function getPrimitiveFromColor(color,name){
+    let c = MSColorToRGBA(color)
+    let prim = getKeyByValue(colourPalette, c)
+    console.log(name,c,prim)
+    return prim
+  }
+
+
+
+  function getKeyByValue(object, value) {
+    return Object.keys(object).find(key => object[key] === value);
+  }
+
+
+
+
+  ///=====================
 
   var textStyles = getSharedStyles(1)
 
@@ -89,36 +188,6 @@ export default function () {
   })
 
 
-
-  //Filter out styles that aren't fills.
-  const regex = RegExp('(0[123457])', 'g')
-  var fills = getSharedStyles(0).filter(style => regex.test(style.name().split('/')[0]) && !style.name().includes('border'))
-
-
-
-  //TODO
-  //If gradient, type = gradient
-  //Add gradient stops if they exist.
-  fills.forEach(style => {
-    let inp = style.style()
-    let o = {}
-    o.type = "SOLID"
-    o.name = `${style.name()}`
-    //If a style doesn't have a fill, it causes an error
-    try {
-      let color = inp.fills()[0].color()
-      o.color = {
-        r: color.red(),
-        g: color.green(),
-        b: color.blue()
-      }
-      o.opacity = color.alpha()
-    } catch (err) {
-      console.error(style.name())
-    }
-
-    paints.push(o)
-  })
 
 
 
@@ -215,13 +284,15 @@ export default function () {
   output.blurs = blurs
   output.shadows = shadows
 
-  const str = JSON.stringify(output, null, 4)
+
+  const str = JSON.stringify(colourPalette,null,4)
+  //const str = JSON.stringify(output, null, 4)
 
   //Make a dialog box to show the output
   var UI = require('sketch/ui')
   UI.getInputFromUser(
     "Style Output:", {
-      description: "Click Ok to copy to clipboard",
+      description: "Click ok to Export",
       initialValue: str,
       type: UI.INPUT_TYPE.string,
       numberOfLines: 20
@@ -234,15 +305,69 @@ export default function () {
         return
       }
       if (value) {
-        //Copy styles when they hit Ok
-        var pasteBoard = NSPasteboard.generalPasteboard()
-        pasteBoard.declareTypes_owner(NSArray.arrayWithObject(NSPasteboardTypeString), nil)
-        pasteBoard.setString_forType(str, NSPasteboardTypeString)
-        UI.message('Copied styles to clipboard')
+        //Export styles when they hit Ok
+
+      //   if (!fs.existsSync(exportPath)){
+      //     fs.mkdirSync(exportPath);
+      // }
+      
+      //   try {
+      //     fs.writeFileSync(exportPath+'export.json', str);
+      //   } catch(err) {
+      //     // An error occurred
+      //     console.error(err);
+      //   }
+        
+
+        // var pasteBoard = NSPasteboard.generalPasteboard()
+        // pasteBoard.declareTypes_owner(NSArray.arrayWithObject(NSPasteboardTypeString), nil)
+        // pasteBoard.setString_forType(str, NSPasteboardTypeString)
+        UI.message('Styles exported to: ' + exportPath)
       }
     }
   )
 
 
 
+}
+
+
+
+
+
+function parseGradient(gradient) {
+
+  let angle = angleBetween(gradient.from(), gradient.to())
+  let type
+  //console.log(gradient)
+  switch (gradient.gradientType()){
+  case 0:
+  type = "linear-gradient"
+  break;
+  case 1:
+  type = "radial-gradient"
+  break;
+  case 2:
+  type = "angular-gradient"
+  break;
+  }
+  
+  let stops = gradient.stops()
+  let str = []
+  stops.forEach(stop => {
+              str.push(` ${MSColorToRGBA(stop.color())} ${(stop.position().toFixed(4)*100)}%`)
+          })
+
+  let output = `${type}(${angle}deg,${str.join(',')})`
+
+  return output
+}
+
+function MSColorToRGBA(c){
+return `rgba(${Math.round(c.red() * 255)}, ${Math.round(c.green() * 255)}, ${Math.round(c.blue() * 255)}, ${c.alpha()})`
+}
+
+function angleBetween(p1,p2){
+let angleDeg = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
+return Math.round(angleDeg)
 }

@@ -4,20 +4,20 @@
   "commands": [
     {
       "name": "my-command",
-      "identifier": "newskit-styles-to-json.my-command-identifier",
+      "identifier": "sketch-newskit.my-command-identifier",
       "script": "__my-command.js"
     }
   ],
   "menu": {
-    "title": "newskit-styles-to-json",
+    "title": "sketch-newskit",
     "items": [
-      "newskit-styles-to-json.my-command-identifier"
+      "sketch-newskit.my-command-identifier"
     ]
   },
   "version": "0.1.0",
   "description": "",
-  "name": "newskit-styles-to-json",
-  "identifier": "newskit-styles-to-json",
+  "name": "sketch-newskit",
+  "identifier": "sketch-newskit",
   "disableCocoaScriptPreprocessor": true,
   "appcast": "https://raw.githubusercontent.com//master/.appcast.xml",
   "author": "LukeFinch",

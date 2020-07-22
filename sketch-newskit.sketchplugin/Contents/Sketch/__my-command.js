@@ -1294,11 +1294,29 @@ module.exports.resourcePath = function resourcePath(resourceName) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony import */ var sketch_ui__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! sketch/ui */ "sketch/ui");
+/* harmony import */ var sketch_ui__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(sketch_ui__WEBPACK_IMPORTED_MODULE_0__);
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+// require("@babel/polyfill");
 var sketch = __webpack_require__(/*! sketch */ "sketch");
 
 var Document = __webpack_require__(/*! sketch/dom */ "sketch/dom").Document;
 
 var document = Document.getSelectedDocument();
+
+var Shape = __webpack_require__(/*! sketch/dom */ "sketch/dom").Shape;
+
+var Text = __webpack_require__(/*! sketch/dom */ "sketch/dom").Text;
+
+var Group = __webpack_require__(/*! sketch/dom */ "sketch/dom").Group;
+
+
+var page = MSDocument.currentDocument().currentPage();
 
 var fs = __webpack_require__(/*! @skpm/fs */ "../../../node_modules/@skpm/fs/index.js");
 
@@ -1306,46 +1324,62 @@ var path = __webpack_require__(/*! @skpm/path */ "../../../node_modules/@skpm/pa
 
 var home = __webpack_require__(/*! os */ "os").homedir();
 
-var exportPath = "".concat(home, "/SketchJSON/");
+var doc = context.document;
+var folderName = "".concat(new Date().toISOString().replace(/[^0-9]/g, ""), "_").concat(doc.fileURL().path().lastPathComponent().replace('.sketch', ''));
+var exportPath = "".concat(home, "/SketchJSON/").concat(folderName, "/");
 var texts = [];
 var paints = [];
 var shadows = [];
 var blurs = [];
-var output = {};
+var output = {}; //NewsKit Constants
+
+var DEFAULT_FONT_SIZE = 16;
+var gridSize = 4;
+var colorPalette = {};
+var crops = {}; // When we run the plugin.
+
 /* harmony default export */ __webpack_exports__["default"] = (function () {
-  /*
-  Sketch's document.getTextStyles() doesn't return all the info, and returns an MSArray
-  
-  Types:
-  0 layerStyles
-  1 textStyles
-  
-  Returns a JavaScript Array of styles
-  */
-  function getSharedStyles(type) {
-    var myStyles = [];
+  // //Make a sheet to block user input whilst the script runs.
+  // //it doesn't take that long, but it's helpful to show something when everything is a task in the background.
+  // let document = sketch.getSelectedDocument()
+  // let documentWindow = document.sketchObject.windowControllers()[0].window()
+  // let mySheetWindow = NSWindow.alloc().initWithContentRect_styleMask_backing_defer(
+  //     NSMakeRect(0, 0, 400, 80),
+  //     (NSWindowStyleMaskTitled | NSWindowStyleMaskDocModalWindow),
+  //     NSBackingStoreBuffered,
+  //     true
+  // )
+  // let progressView = NSProgressIndicator
+  //     .alloc()
+  //     .initWithFrame(NSMakeRect(20, 20, 360, 12))
+  // progressView.setControlTint(NSBlueControlTint)
+  // progressView.startAnimation(true)
+  // var title = NSTextView.alloc().initWithFrame(NSMakeRect(20,34,360,20))
+  //     title.string = 'Exporting Styles'
+  //     title.drawsBackground = false;
+  //     title.editable = false;
+  //     title.setAlignment(2)
+  // mySheetWindow.contentView().addSubview(progressView)
+  // mySheetWindow.contentView().addSubview(title)
+  // documentWindow.beginSheet_completionHandler(mySheetWindow, nil)
+  // //Run this when it's all done
+  // //    documentWindow.endSheet(mySheetWindow)
+  //===============
+  // Border Radius
+  //==============
+  var shapeDefault = findArtboardsNamed("02 Theme defaults/04 Shape/borderRadiusDefault")[0].layers()[0].cornerRadiusString() + 'px';
+  var BORDER_RADIUS = {
+    "borderRadiusDefault": shapeDefault
+  }; //=====================
+  // Color Primitives
+  //=====================
 
-    if (sketch.version.sketch < 52) {
-      var styles = type == 0 ? MSDocument.currentDocument().documentData().layerStyles().objects() : MSDocument.currentDocument().documentData().layerTextStyles().objects();
-    } else {
-      var styles = type == 0 ? MSDocument.currentDocument().documentData().allLayerStyles() : MSDocument.currentDocument().documentData().allTextStyles();
-    }
+  /* Get the primitive colors that form all the foundations */
 
-    var sortByName = NSSortDescriptor.sortDescriptorWithKey_ascending("name", 1);
-    styles = styles.sortedArrayUsingDescriptors([sortByName]);
-    styles.forEach(function (style) {
-      myStyles.push(style);
-    });
-    return myStyles;
-  }
-  /* Get the primitive colours that form all the foundations */
-
-
-  var colourPalette = {};
-  var colourStyles = getSharedStyles(0).filter(function (style) {
-    return style.name().includes('ExtendedPalette') || style.name().includes('Overlays') && !style.name().includes('border');
+  var colorStyles = getSharedStyles(0).filter(function (style) {
+    return style.name().includes('ExtendedPalette') && !style.name().includes('border');
   });
-  colourStyles.forEach(function (style) {
+  colorStyles.forEach(function (style) {
     var value;
     var name = style.name().split('/')[style.name().split('/').length - 1];
     var fills = style.style().fills();
@@ -1358,33 +1392,22 @@ var output = {};
       if (fill.fillType() == 0) {
         value = MSColorToRGBA(fill.color());
       } else {
+        //gradients.push({'name':name,'gradient':fill.gradient()})
         value = parseGradient(fill.gradient());
       }
     }
 
-    colourPalette[name] = value;
+    colorPalette[name] = value;
   });
-
-  if (!fs.existsSync(exportPath)) {
-    fs.mkdirSync(exportPath);
-  }
-
-  try {
-    fs.writeFileSync(exportPath + 'colour-palette.json', JSON.stringify(colourPalette, null, 4));
-  } catch (err) {
-    // An error occurred
-    console.error(err);
-  }
-  /* Get the theme colours, where a option is given a decision */
+  /* Get the theme colors */
   //Filter out styles that aren't fills.
 
-
   var regex = RegExp('(0[12345])', 'g');
-  var themeColours = getSharedStyles(0).filter(function (style) {
-    return style.name().split('/')[0] && !style.name().includes('border') && !style.name().includes('Shadows') && !style.name().includes('Images') && !style.name().includes('ExtendedPalette');
+  var themeColors = getSharedStyles(0).filter(function (style) {
+    return style.name().split('/')[0] && !style.name().includes('border') && !style.name().includes('Shadows') && !style.name().includes('Overlays') && !style.name().includes('Images') && !style.name().includes('ExtendedPalette');
   });
-  var outputThemeColours = {};
-  themeColours.forEach(function (style) {
+  var outputThemeColors = {};
+  themeColors.forEach(function (style) {
     var value;
     var name = style.name().split('/')[style.name().split('/').length - 1];
     var fills = style.style().fills();
@@ -1401,19 +1424,12 @@ var output = {};
       }
     }
 
-    outputThemeColours[name] = value || "undefined for some fucking reason";
+    outputThemeColors[name] = "{{colors.".concat(value, "}}");
   });
-
-  try {
-    fs.writeFileSync(exportPath + 'theme-colours.json', JSON.stringify(outputThemeColours, null, 4));
-  } catch (err) {
-    // An error occurred
-    console.error(err);
-  }
 
   function getPrimitiveFromColor(color, name) {
     var c = MSColorToRGBA(color);
-    var prim = getKeyByValue(colourPalette, c);
+    var prim = getKeyByValue(colorPalette, c);
     return prim;
   }
 
@@ -1422,84 +1438,27 @@ var output = {};
       return object[key] === value;
     });
   } ///=====================
+  // Blurs and Shadows
+  ///////////////////////
 
 
-  var textStyles = getSharedStyles(1);
-  /*
-  Optional - Filter so we only get left aligned text, and the base colour.
-  Figma's less explicit around type alignment and colour for styles.
-  Therefore we only need to extract the Font Family, Weight, Size, Line Height and Kerning
-  
-  We ignore text decoration in these cases. Underlining should be done at the designers discrepancy in the design outputs.
-  Italic / Oblique fonts are pulled through, this is a side-effect of getting the weight from the PostScript name. 
-   
-  */
-
-  textStyles = textStyles.filter(function (style) {
-    return style.name().includes('inkBase') && document.getSharedTextStyleWithID(style.objectID()).style.alignment == 'left';
-  });
-  textStyles.forEach(function (style) {
-    //Output object
-    var o = {};
-    o.type = "TEXT"; //The input style
-
-    var inp = document.getSharedTextStyleWithID(style.objectID()).style; //Extracting the name of the weight from the Postscript name, Figma expects this in title case with spaces.
-
-    var fontStyle = style.style().textStyle().fontPostscriptName().split('-')[1].replace(/([a-z0-9])([A-Z])/g, '$1 $2'); //Remove the ink name from the token name
-
-    var n = style.name().split('/');
-    n.pop();
-    o.name = n.join('/');
-    o.fontSize = inp.fontSize;
-    o.fontName = {
-      family: inp.fontFamily,
-      style: fontStyle
-    };
-    o.lineHeight = {
-      unit: "PIXELS",
-      value: inp.lineHeight
-    };
-    o.letterSpacing = inp.kerning;
-    o.paragraphSpacing = inp.paragraphSpacing;
-    texts.push(o);
-  });
-  /*
-  Get the shadow styles
-  Sketch's API doesn't let us fetch the blend mode of a shadow.
-  But, there's no logical way to set the blend mode of a box-shadow in CSS, so we ignore and set it to 'NORMAL'
-  Figma doesn't allow for Spread on drop shadows. Something something GPU intensive blah blah.. 
-  We include it here anyway commented out, because maybe one day in the future they'll enable it.
-  */
-
+  var shadowsOutput = {};
   var shadowStyles = getSharedStyles(0).filter(function (style) {
     return style.name().includes('Shadows');
   });
   shadowStyles.forEach(function (style) {
-    var o = {};
-    o.type = "EFFECT";
-    var inp = style.style();
-    o.name = "".concat(style.name());
-    o.effects = [];
-    inp.shadows().forEach(function (shadow) {
-      var e = {};
-      e.type = "DROP_SHADOW";
-      e.color = {
-        r: shadow.color().red(),
-        g: shadow.color().green(),
-        b: shadow.color().blue(),
-        a: shadow.color().alpha()
-      };
-      e.blendMode = "NORMAL";
-      e.visible = true;
-      e.offset = {
-        x: shadow.offsetX(),
-        y: shadow.offsetY()
-      };
-      e.radius = shadow.blurRadius(); // e.spread = shadow.spread()
-
-      o.effects.push(e);
+    var tokenName = style.name().split('/')[1];
+    var layer = new Shape({
+      name: 'my shape',
+      style: style.style(),
+      parent: page
     });
-    shadows.push(o);
+    var predicate = NSPredicate.predicateWithFormat("objectID == %@", layer.id);
+    var result = page.children().filteredArrayUsingPredicate(predicate);
+    var shadowLayer = result[0];
+    var shadow = shadowLayer.CSSAttributes()[1].replace('box-shadow: ', '');
+    layer.remove();
+    shadowsOutput[tokenName] = "".concat(shadow);
   });
   /*
   Blur effects, this isn't the best implementation.. NewsKit was built on top of Sketch's implementations,
@@ -1510,7 +1469,8 @@ var output = {};
   2 Zoom  (Unsuppoted in Figma)
   3 Background
   
-  */
+   Needs adjusting for NewsKit. No sensible way of handling blurs in newskit as of yet.
+   */
 
   var blurStyles = getSharedStyles(0).filter(function (style) {
     return style.style().blur().isEnabled() == 1 && !style.name().includes('border');
@@ -1548,50 +1508,425 @@ var output = {};
 
     o.effects.push(e);
     blurs.push(o);
-  }); //Combine all the styles into one Object
+  }); //=====================
+  /// Overlays
+  //=====================
 
-  output.texts = texts;
-  output.paints = paints;
-  output.blurs = blurs;
-  output.shadows = shadows;
-  var str = JSON.stringify(colourPalette, null, 4); //const str = JSON.stringify(output, null, 4)
-  //Make a dialog box to show the output
-
-  var UI = __webpack_require__(/*! sketch/ui */ "sketch/ui");
-
-  UI.getInputFromUser("Style Output:", {
-    description: "Click ok to Export",
-    initialValue: str,
-    type: UI.INPUT_TYPE.string,
-    numberOfLines: 20
-  }, function (err, value) {
-    if (err) {
-      // most likely the user canceled the input
-      return;
-    }
-
-    if (value) {
-      //Export styles when they hit Ok
-      //   if (!fs.existsSync(exportPath)){
-      //     fs.mkdirSync(exportPath);
-      // }
-      //   try {
-      //     fs.writeFileSync(exportPath+'export.json', str);
-      //   } catch(err) {
-      //     // An error occurred
-      //     console.error(err);
-      //   }
-      // var pasteBoard = NSPasteboard.generalPasteboard()
-      // pasteBoard.declareTypes_owner(NSArray.arrayWithObject(NSPasteboardTypeString), nil)
-      // pasteBoard.setString_forType(str, NSPasteboardTypeString)
-      UI.message('Styles exported to: ' + exportPath);
-    }
+  var overlayStyles = getSharedStyles(0).filter(function (style) {
+    return style.name().includes('Overlays') && !style.name().includes('border');
   });
-});
+  var overlaysOutput = {};
+  overlayStyles.forEach(function (style) {
+    var value;
+    var name = style.name().split('/')[style.name().split('/').length - 1];
+    var fills = style.style().fills();
+
+    if (!fills.length) {
+      value = "transparent";
+    } else {
+      var fill = fills[0];
+
+      if (fill.fillType() == 0) {
+        value = MSColorToRGBA(fill.color());
+      } else {
+        //gradients.push({'name':name,'gradient':fill.gradient()})
+        value = parseGradient(fill.gradient());
+      }
+    }
+
+    overlaysOutput[name] = value;
+  }); //==============================================
+
+  /*Text Styles*/
+  //Newskit defaults, if a brand's using letter spacing that isnt covered here, they're making everyone's life difficult.
+
+  var LETTER_SPACING = {
+    "fontLetterSpacing010": -0.5,
+    "fontLetterSpacing020": -0.25,
+    "fontLetterSpacing030": 0,
+    "fontLetterSpacing040": 0.25,
+    "fontLetterSpacing050": 0.5,
+    "fontLetterSpacing060": 0.75,
+    "fontLetterSpacing070": 1
+  }; // A lot of this stuff could probably be removed... but its useful if we ever wanted to define font-families properly.
+  //From @airbnb/react-sketch
+  //Sketch gives a float for fontWeight, 
+
+  var FONT_WEIGHTS = {
+    ultralight: -0.8,
+    '100': -0.8,
+    thin: -0.6,
+    '200': -0.6,
+    light: -0.4,
+    '300': -0.4,
+    normal: 0,
+    regular: 0,
+    '400': 0,
+    semibold: 0.23,
+    demibold: 0.23,
+    '500': 0.23,
+    '600': 0.3,
+    bold: 0.4,
+    '700': 0.4,
+    extrabold: 0.56,
+    ultrabold: 0.56,
+    heavy: 0.56,
+    '800': 0.56,
+    black: 0.62,
+    '900': 0.62
+  }; //Extract out only CSS numbers
+
+  var FONT_WEIGHTS_NUMBER = {
+    '-0.8': '100',
+    '-0.6': '200',
+    '-0.4': '300',
+    '0': '400',
+    '0.23': '500',
+    '0.3': '600',
+    '0.4': '700',
+    '0.56': '800',
+    '0.62': '900'
+  }; //Map CSS font-weight to a NewsKit token
+
+  var fontWeightTokens = {
+    'fontWeight010': '100',
+    'fontWeight020': '200',
+    'fontWeight030': '300',
+    'fontWeight040': '400',
+    'fontWeight050': '500',
+    'fontWeight060': '600',
+    'fontWeight070': '700',
+    'fontWeight080': '800',
+    'fontWeight090': '900'
+  }; //from @airbnb/react-sketch
+  //Return booleans of font-style and font-stretch
+
+  var isItalicFont = function isItalicFont(font) {
+    var traits = font.fontDescriptor().objectForKey(NSFontTraitsAttribute);
+    var symbolicTraits = traits[NSFontSymbolicTrait].unsignedIntValue();
+    return (symbolicTraits & NSFontItalicTrait) !== 0;
+  };
+
+  var isCondensedFont = function isCondensedFont(font) {
+    var traits = font.fontDescriptor().objectForKey(NSFontTraitsAttribute);
+    var symbolicTraits = traits[NSFontSymbolicTrait].unsignedIntValue();
+    return (symbolicTraits & NSFontCondensedTrait) !== 0;
+  };
+
+  var weightOfFont = function weightOfFont(font) {
+    var traits = font.fontDescriptor().objectForKey(NSFontTraitsAttribute);
+    var weight = traits[NSFontWeightTrait].doubleValue();
+
+    if (weight === 0.0) {
+      var weights = Object.keys(FONT_WEIGHTS);
+      var fontName = String(font.fontName()).toLowerCase();
+      var matchingWeight = weights.find(function (w) {
+        return fontName.endsWith(w);
+      });
+
+      if (matchingWeight) {
+        return FONT_WEIGHTS[matchingWeight];
+      }
+    }
+
+    return weight;
+  };
+
+  var textStyles = getSharedStyles(1);
+  textStyles = textStyles.filter(function (style) {
+    return style.name().includes('inkBase') && document.getSharedTextStyleWithID(style.objectID()).style.alignment == 'left';
+  });
+  var fontSizesArr = [];
+  var lineHeightsArr = [];
+  var fontWeightsArr = [];
+  var fontFamiliesArr = [];
+  var fontFiles = new Set(); //Establish all the primitive values
+
+  textStyles.forEach(function (style) {
+    //Sketch has values in different places
+    var textStyle = document.getSharedTextStyleWithID(style.objectID()).style;
+    var font = style.value().primitiveTextStyle().attributes()[NSFont]; //Font Family
+    //fontFamiliesArr.push(font.familyName()) -- "The Sun way of doing things"
+
+    fontFamiliesArr.push(font.fontName()); // "The Times way"
+    //Font Size
+
+    var fontSizePx = textStyle.fontSize;
+    fontSizesArr.push(fontSizePx / DEFAULT_FONT_SIZE);
+    var lineHeight = textStyle.lineHeight; //Actual LineHeight(px) test against this to get a rem value
+
+    var adjLineHeight = 0;
+    var outputRem = 0;
+    var inc = 1 / 24; // Catch eighths and sixths
+
+    for (var rem = 1; rem <= 4; rem += inc) {
+      var estLineHeight = rem * fontSizePx; //from: ncu-newskit/src/utils/font-sizing.ts 
+
+      var adjLineHeight = Math.round(estLineHeight * fontSizePx / gridSize) * gridSize / fontSizePx;
+
+      if (adjLineHeight == lineHeight) {
+        outputRem = Number(rem.toFixed(4)); //If the lineHeight (rem) matches up to the value after rounding to gridSize 
+
+        lineHeightsArr.push(outputRem);
+        break;
+      }
+
+      if (rem == 4) {
+        console.error("Couldn't find a line height (probably not a multiple of gridSize)", fontSizePx, lineHeight);
+      }
+    }
+
+    var w = FONT_WEIGHTS_NUMBER["".concat(weightOfFont(font))];
+
+    if (fontWeightsArr.indexOf(w) < 0) {
+      fontWeightsArr.push(w);
+    }
+  }); //The output Object
+
+  var fonts = {
+    fontFamily: {}
+  }; //used for value lookups. Not the tidiest method..
+
+  var textPrimitives = {
+    fontFamily: {},
+    fontSize: {},
+    lineHeight: {},
+    fontWeight: {},
+    fontLetterSpacing: {}
+  };
+  fontWeightsArr = fontWeightsArr.unique().sort();
+  fontSizesArr = fontSizesArr.unique().sort();
+  lineHeightsArr = lineHeightsArr.unique().sort();
+  fontFamiliesArr = fontFamiliesArr.unique().sort();
+  fontFamiliesArr.forEach(function (fam, idx) {
+    var cfg = getCropsForFontFamily(fam);
+    var tokenName = 'fontFamily' + (idx + 1);
+    console.log(cfg);
+    fonts['fontFamily'][tokenName] = {
+      'fontFamily': "".concat(cfg.family),
+      'cropConfig': {}
+    };
+    fonts['fontFamily'][tokenName]['cropConfig'] = {
+      'top': cfg.top,
+      'bottom': cfg.bottom,
+      'defaultLineHeight': cfg.defaultLineHeight
+    };
+  });
+
+  function getCropsForFontFamily(fontFamily) {
+    var family = fontFamily;
+    var size = DEFAULT_FONT_SIZE; //16px = 1rem
+    //Create a new text layer, we use capital T to get the cap height. 
+
+    var text = new Text({
+      text: "T",
+      parent: page
+    }); //Get an actual layer for that text layer, and not just a text object.
+
+    var predicate = NSPredicate.predicateWithFormat("objectID == %@", text.id);
+    var result = page.children().filteredArrayUsingPredicate(predicate);
+    var textLayer = result[0]; //Set the styles
+
+    textLayer.fontPostscriptName = family;
+    textLayer.fontSize = size; //Get the default line height
+
+    var defaultLineHeight = getDefaultLineHeightForFont(textLayer.fontPostscriptName(), textLayer.fontSize());
+    var defaultLineHeightEm = defaultLineHeight / size;
+    var bounds = textLayer.pathInFrame().bounds();
+    var t = -bounds.origin.y / size;
+    var b = -(defaultLineHeight - bounds.size.height - bounds.origin.y) / size;
+    text.remove(); //Delete the temporary layer.
+
+    crops[fontFamily] = {
+      'top': t,
+      'bottom': b,
+      'defaultLineHeight': defaultLineHeightEm
+    };
+    return {
+      'family': fontFamily,
+      'top': t,
+      'bottom': b,
+      'defaultLineHeight': defaultLineHeightEm
+    };
+  }
+
+  function getDefaultLineHeightForFont(fontFamily, size) {
+    var font = NSFont.fontWithName_size(fontFamily, size);
+    var lm = NSLayoutManager.alloc().init();
+    return lm.defaultLineHeightForFont(font);
+  }
+
+  fontWeightsArr.forEach(function (value, index) {
+    var tokenName = 'fontWeight' + tokenFormat(index + 1); //Commented out, tokens all just sit under a {{font}} object..
+
+    textPrimitives['fontWeight'][tokenName] = "".concat(value);
+    fonts[tokenName] = "".concat(value);
+  });
+  fontSizesArr.forEach(function (value, index) {
+    var tokenName = 'fontSize' + tokenFormat(index + 1);
+    textPrimitives['fontSize'][tokenName] = value;
+    fonts[tokenName] = "".concat(value, "rem");
+  });
+  lineHeightsArr.forEach(function (value, index) {
+    var tokenName = 'fontlineHeight' + tokenFormat(index + 1);
+    textPrimitives['lineHeight'][tokenName] = value;
+    fonts[tokenName] = "".concat(value);
+  });
+  textPrimitives['fontLetterSpacing'] = LETTER_SPACING;
+  fonts = _objectSpread(_objectSpread({}, fonts), LETTER_SPACING); // fontLetterSpacing.forEach((value, index) => {
+  //   let tokenName = 'fontLetterSpacing' + tokenFormat(index + 1)
+  //   textPrimitives['fontLetterSpacing'][tokenName] = value
+  // })
+
+  var textStylesOutput = {};
+  textStyles.forEach(function (style) {
+    //output object
+    var o = {};
+    var cropProps = {}; //Get the token name for the text styles
+
+    var n = style.name().split('/')[1]; //Sketch has values in different places
+
+    var textStyle = document.getSharedTextStyleWithID(style.objectID()).style;
+    var font = style.value().primitiveTextStyle().attributes()[NSFont]; //Export the files used in the styles.
+
+    fontFiles.add(path.resolve(font.fileURL().path())); //Size
+
+    var fontSizePx = textStyle.fontSize;
+    o.fontSize = "{{fonts.".concat(textPrimitives.fontSize.getKeyByValue(textStyle.fontSize / DEFAULT_FONT_SIZE), "}}");
+    cropProps.size = textStyle.fontSize / DEFAULT_FONT_SIZE; //lineHeight - Rounded to grid size
+
+    var lineHeightPx = textStyle.lineHeight;
+    Object.entries(textPrimitives.lineHeight).forEach(function (lineHeight) {
+      var estLineHeight = lineHeight[1]; //from: ncu-newskit/src/utils/font-sizing.ts 
+
+      var adjLineHeightPx = Math.round(estLineHeight * fontSizePx / gridSize) * gridSize;
+
+      if (adjLineHeightPx == lineHeightPx) {
+        o.lineHeight = "{{fonts.".concat(lineHeight[0], "}");
+        cropProps.lineHeight = adjLineHeightPx / DEFAULT_FONT_SIZE;
+      }
+    }); // o.fontFamily = textPrimitives.fontFamily.getKeyByValue(`${font.fontName()}`) //e.g 'The Sun'
+    // //o.typeName = `${font.typeName()}` // e.g 'Heavy Narrow'
+    //Font Family
+
+    var familyObj = Object.values(fonts.fontFamily).find(function (item) {
+      return item.fontFamily === "".concat(font.fontName());
+    });
+    var familyKey = fonts.fontFamily.getKeyByValue(familyObj);
+    o.fontFamily = "{{fonts.".concat(familyKey, "}}");
+    var w = FONT_WEIGHTS_NUMBER["".concat(weightOfFont(font))];
+    o.fontWeight = "{{fonts.".concat(textPrimitives.fontWeight.getKeyByValue(w), "}}"); //Useful Stuff for if we want to do font families the 'right' way
+    // o.fontStretch = isCondensedFont(font) ? 'condensed' : 'normal'
+    // o.fontStyle = isItalicFont(font) ? 'italic' : 'normal'
+    // o.textDecorationLine = textStyle.textUnderline ? 'underline' : 'none'
+
+    var kerning = textStyle.kerning || 0;
+    o.fontLetterSpacing = "{{fonts.".concat(textPrimitives.fontLetterSpacing.getKeyByValue(kerning), "}}"); //Calculate the font cropping
+
+    var cc = crops["".concat(font.fontName())];
+    var deltaLineHeight = cropProps.lineHeight - cc.defaultLineHeight; // o.cropConfig = {}
+    // console.log(cc.top, cc.bottom, deltaLineHeight, cropProps.lineHeight, cc.defaultLineHeight)
+    // let top = parseFloat(cc.top) - parseFloat(deltaLineHeight/2)
+    // let bottom = parseFloat(cc.bottom) - parseFloat(deltaLineHeight/2)
+    // o.cropConfig.cropTop = `${top}`
+    // o.cropConfig.cropBottom =  `${bottom}`
+
+    textStylesOutput[n] = o; //Add the token to the output
+  });
+  exportFiles();
+
+  function exportFiles() {
+    if (!fs.existsSync(exportPath)) {
+      fs.mkdirSync(exportPath);
+    }
+
+    if (!fs.existsSync(exportPath + '/fonts')) {
+      fs.mkdirSync(exportPath + '/fonts');
+    } //Copy all the fonts
+
+
+    fontFiles.forEach(function (file) {
+      try {
+        fs.copyFileSync(file, exportPath + 'fonts/' + path.basename(file));
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    try {
+      fs.writeFileSync(exportPath + 'fonts.json', prettifyJSON(fonts, 1));
+    } catch (err) {
+      console.error(err);
+    } // // Colors are now wrapped into one colors.json file. So this code is no longer needed.
+    // try {
+    //   fs.writeFileSync(exportPath + 'color-palette.json', JSON.stringify(colorPalette, null, 4));
+    // } catch (err) {
+    //   // An error occurred
+    //   console.error(err);
+    // }
+    // try {
+    //   fs.writeFileSync(exportPath + 'theme-colors.json', JSON.stringify(outputThemeColors, null, 4));
+    // } catch (err) {
+    //   // An error occurred
+    //   console.error(err);
+    // }
+
+
+    try {
+      fs.writeFileSync(exportPath + 'colors.json', prettifyJSON(_objectSpread(_objectSpread({}, colorPalette), outputThemeColors)));
+    } catch (err) {
+      console.error(err);
+    }
+
+    try {
+      fs.writeFileSync(exportPath + 'text-styles.json', JSON.stringify(textStylesOutput, null, 4));
+    } catch (err) {
+      // An error occurred
+      console.error(err);
+    }
+
+    try {
+      fs.writeFileSync(exportPath + 'border-radius.json', JSON.stringify(BORDER_RADIUS, null, 4));
+    } catch (err) {
+      console.error(err);
+    }
+
+    try {
+      fs.writeFileSync(exportPath + 'overlays.json', JSON.stringify(overlaysOutput, null, 4));
+    } catch (err) {
+      console.error(err);
+    }
+
+    try {
+      fs.writeFileSync(exportPath + 'shadows.json', JSON.stringify(shadowsOutput, null, 4));
+    } catch (err) {
+      console.error(err);
+    } //documentWindow.endSheet(mySheetWindow) //Remove the progress bar
+
+
+    sketch.UI.message('Exported Styles to: ' + exportPath); //Tell the user where it exported to.
+  }
+}); //===================================================
+// Utility functions.
+//I should probably take these out and import them.
+// Oh well.
+//===================================================
+//Convert sketch's colors into CSS RGBA
+
+function MSColorToRGBA(c) {
+  return "rgba(".concat(Math.round(c.red() * 255), ", ").concat(Math.round(c.green() * 255), ", ").concat(Math.round(c.blue() * 255), ", ").concat(c.alpha(), ")");
+} //Used for gradients, to know what direction they face.
+
+
+function angleBetween(p1, p2) {
+  var angleDeg = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
+  return Math.round(angleDeg);
+} //Return a CSS string for some gradient stuff.
+
 
 function parseGradient(gradient) {
   var angle = angleBetween(gradient.from(), gradient.to());
-  var type; //console.log(gradient)
+  var type;
 
   switch (gradient.gradientType()) {
     case 0:
@@ -1610,19 +1945,223 @@ function parseGradient(gradient) {
   var stops = gradient.stops();
   var str = [];
   stops.forEach(function (stop) {
+    //We wanted to have gradients be made up of two tokens, but alpha values made things awkard.
+    // let colorToken = colorPalette.getKeyByValue(`${MSColorToRGBA(stop.color())}`)
+    // str.push(` ${colorToken} ${(stop.position().toFixed(4)*100)}%`)
     str.push(" ".concat(MSColorToRGBA(stop.color()), " ").concat(stop.position().toFixed(4) * 100, "%"));
   });
   var output = "".concat(type, "(").concat(angle, "deg,").concat(str.join(','), ")");
   return output;
-}
+} //https://gist.github.com/abynim/e2df3ea4dc9ede209cc0
+//https://gist.github.com/abynim/4e1d4754f990cfc933ae
+//Search Through sketch documents for stuff.
 
-function MSColorToRGBA(c) {
-  return "rgba(".concat(Math.round(c.red() * 255), ", ").concat(Math.round(c.green() * 255), ", ").concat(Math.round(c.blue() * 255), ", ").concat(c.alpha(), ")");
-}
 
-function angleBetween(p1, p2) {
-  var angleDeg = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
-  return Math.round(angleDeg);
+var findLayersMatchingPredicate_inContainer_filterByType = function findLayersMatchingPredicate_inContainer_filterByType(predicate, container, layerType) {
+  var scope;
+
+  switch (layerType) {
+    case MSPage:
+      scope = doc.pages();
+      return scope.filteredArrayUsingPredicate(predicate);
+      break;
+
+    case MSArtboardGroup:
+      if (typeof container !== 'undefined' && container != nil) {
+        if (container.className == "MSPage") {
+          scope = container.artboards();
+          return scope.filteredArrayUsingPredicate(predicate);
+        }
+      } else {
+        // search all pages
+        var filteredArray = NSArray.array();
+        var loopPages = doc.pages().objectEnumerator(),
+            page;
+
+        while (page = loopPages.nextObject()) {
+          scope = page.artboards();
+          filteredArray = filteredArray.arrayByAddingObjectsFromArray(scope.filteredArrayUsingPredicate(predicate));
+        }
+
+        return filteredArray;
+      }
+
+      break;
+
+    default:
+      if (typeof container !== 'undefined' && container != nil) {
+        scope = container.children();
+        return scope.filteredArrayUsingPredicate(predicate);
+      } else {
+        // search all pages
+        var filteredArray = NSArray.array();
+        var loopPages = doc.pages().objectEnumerator(),
+            page;
+
+        while (page = loopPages.nextObject()) {
+          scope = page.children();
+          filteredArray = filteredArray.arrayByAddingObjectsFromArray(scope.filteredArrayUsingPredicate(predicate));
+        }
+
+        return filteredArray;
+      }
+
+  }
+
+  return NSArray.array(); // Return an empty array if no matches were found
+};
+
+var findFirstLayerMatchingPredicate_inContainer_filterByType = function findFirstLayerMatchingPredicate_inContainer_filterByType(predicate, container, layerType) {
+  var filteredArray = findLayersMatchingPredicate_inContainer_filterByType(predicate, container, layerType);
+  return filteredArray.firstObject();
+};
+
+var findLayersNamed_inContainer_filterByType = function findLayersNamed_inContainer_filterByType(layerName, container, layerType) {
+  var predicate = typeof layerType === 'undefined' || layerType == nil ? NSPredicate.predicateWithFormat("name == %@", layerName) : NSPredicate.predicateWithFormat("name == %@ && class == %@", layerName, layerType);
+  return findLayersMatchingPredicate_inContainer_filterByType(predicate, container);
+};
+
+var findPagesNamed = function findPagesNamed(pageName) {
+  var predicate = NSPredicate.predicateWithFormat("name == %@", pageName);
+  return findLayersMatchingPredicate_inContainer_filterByType(predicate, nil, MSPage);
+};
+
+var findArtboardsNamed = function findArtboardsNamed(artboardName) {
+  var predicate = NSPredicate.predicateWithFormat("name == %@", artboardName);
+  return findLayersMatchingPredicate_inContainer_filterByType(predicate, nil, MSArtboardGroup);
+}; ///Rectangle handlers.
+
+
+var lib = {};
+
+lib.CGSizeToObj = function (size) {
+  return {
+    width: size.width,
+    height: size.height
+  };
+};
+
+lib.CGRectToObj = function (rect) {
+  var origin = rect.origin;
+  var size = rect.size;
+  return {
+    x: origin.x,
+    y: origin.y,
+    width: size.width,
+    height: size.height
+  };
+};
+/*
+ Sketch's document.getTextStyles() doesn't return all the info, and returns an MSArray
+ 
+ Types:
+ 0 layerStyles
+ 1 textStyles
+ 
+ Returns a JavaScript Array of styles
+ */
+
+
+function getSharedStyles(type) {
+  var myStyles = [];
+
+  if (sketch.version.sketch < 52) {
+    var styles = type == 0 ? MSDocument.currentDocument().documentData().layerStyles().objects() : MSDocument.currentDocument().documentData().layerTextStyles().objects();
+  } else {
+    var styles = type == 0 ? MSDocument.currentDocument().documentData().allLayerStyles() : MSDocument.currentDocument().documentData().allTextStyles();
+  }
+
+  var sortByName = NSSortDescriptor.sortDescriptorWithKey_ascending("name", 1);
+  styles = styles.sortedArrayUsingDescriptors([sortByName]);
+  styles.forEach(function (style) {
+    myStyles.push(style);
+  });
+  return myStyles;
+} //Function to pad numbers into token form. eg: 1 becomes 010, 4.5 becomes 045
+
+
+var tokenFormat = function tokenFormat(number) {
+  return new Array(+3 + 1 - (number * 10 + '').length).join('0') + number * 10;
+}; //Sketch Scripts don't support Set(), we can fix this with a plugin and polyfills though...
+
+
+Array.prototype.contains = function (v) {
+  for (var i = 0; i < this.length; i++) {
+    if (this[i] === v) return true;
+  }
+
+  return false;
+};
+
+Array.prototype.unique = function () {
+  var arr = [];
+
+  for (var i = 0; i < this.length; i++) {
+    if (!arr.contains(this[i])) {
+      arr.push(this[i]);
+    }
+  }
+
+  return arr;
+}; //Get Object Key by value, to map each style to primitives
+
+
+Object.prototype.getKeyByValue = function (value) {
+  for (var prop in this) {
+    if (this.hasOwnProperty(prop)) {
+      if (this[prop] === value) return prop;
+    }
+  }
+}; //Split camelCase into words[]
+
+
+function splitWords(s) {
+  var re,
+      match,
+      output = []; // re = /[A-Z]?[a-z]+/g
+
+  re = /([A-Za-z]?)([a-z]+)/g;
+  /*
+  matches example: "oneTwoThree"
+  ["one", "o", "ne"]
+  ["Two", "T", "wo"]
+  ["Three", "T", "hree"]
+  */
+
+  match = re.exec(s);
+
+  while (match) {
+    // output.push(match.join(""));
+    output.push([match[1].toUpperCase(), match[2]].join(""));
+    match = re.exec(s);
+  }
+
+  return output;
+} //Splits JSON based on categories, returns a string with nice spacing between categories
+
+
+function prettifyJSON(data, idx) {
+  var idx = idx ? idx : 0;
+  var str = JSON.stringify(data, '\n', 4);
+  var arr = str.split('\n');
+  var prevCat = null;
+  arr.forEach(function (item, index) {
+    var cat = splitWords(item)[idx];
+    var cats = 0;
+
+    if (prevCat !== cat && index != 1 && index != arr.length - 1) {
+      cats++;
+
+      if (cats >= 1) {
+        arr[index - 1] += '\n';
+        cats = 0;
+      }
+    }
+
+    prevCat = cat;
+  });
+  str = arr.join('\n');
+  return str;
 }
 
 /***/ }),

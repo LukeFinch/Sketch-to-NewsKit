@@ -9,7 +9,7 @@ var document = Document.getSelectedDocument()
 const Shape = require('sketch/dom').Shape
 const Text = require('sketch/dom').Text
 const Group = require('sketch/dom').Group
-import UI from 'sketch/ui'
+
 
 const page = MSDocument.currentDocument().currentPage();
 
@@ -21,7 +21,12 @@ const home = require("os").homedir();
 const doc = context.document
 const folderName = `${new Date().toISOString().replace(/[^0-9]/g, "")}_${doc.fileURL().path().lastPathComponent().replace('.sketch','')}`
 
-const exportPath = `${home}/SketchJSON/${folderName}/`
+
+const mainFolder = `${home}/NewsKit Theme Exports/`
+if (!fs.existsSync(mainFolder)) {
+  fs.mkdirSync(mainFolder);
+}
+const exportPath = `${mainFolder}${folderName}/`
 
 
 var texts = []
@@ -97,7 +102,7 @@ export default function () {
   /* Get the primitive colors that form all the foundations */
 
   var colorStyles = getSharedStyles(0).filter(style => 
-                                                style.name().includes('ExtendedPalette') && !style.name().includes('border')
+                                                style.name().includes('Palette') && !style.name().includes('border') && !style.name().includes('_null')
                                                 )
 
 
@@ -133,7 +138,9 @@ export default function () {
     !style.name().includes('Shadows') &&
     !style.name().includes('Overlays') &&
     !style.name().includes('Images') &&
-    !style.name().includes('ExtendedPalette'))
+    !style.name().includes('Palette') &&
+    !style.name().includes('_null')
+  )
 
   var outputThemeColors = {}
 
@@ -153,7 +160,7 @@ export default function () {
       }
     }
 
-    outputThemeColors[name] = `{{colors.${value}}}`
+    value == "transparent" ? outputThemeColors["transpareent"] = "transparent" : outputThemeColors[name] = `{{colors.${value}}}`
   })
 
   function getPrimitiveFromColor(color, name) {
@@ -328,27 +335,27 @@ export default function () {
   };
   //Extract out only CSS numbers
   const FONT_WEIGHTS_NUMBER = {
-    '-0.8': '100',
-    '-0.6': '200',
-    '-0.4': '300',
-    '0': '400',
-    '0.23': '500',
-    '0.3': '600',
-    '0.4': '700',
-    '0.56': '800',
-    '0.62': '900'
+    '-0.8': 100,
+    '-0.6': 200,
+    '-0.4': 300,
+    '0':    400,
+    '0.23': 500,
+    '0.3':  600,
+    '0.4':  700,
+    '0.56': 800,
+    '0.62': 900
   }
   //Map CSS font-weight to a NewsKit token
   const fontWeightTokens = {
-    'fontWeight010': '100',
-    'fontWeight020': '200',
-    'fontWeight030': '300',
-    'fontWeight040': '400',
-    'fontWeight050': '500',
-    'fontWeight060': '600',
-    'fontWeight070': '700',
-    'fontWeight080': '800',
-    'fontWeight090': '900',
+    'fontWeight010': 100,
+    'fontWeight020': 200,
+    'fontWeight030': 300,
+    'fontWeight040': 400,
+    'fontWeight050': 500,
+    'fontWeight060': 600,
+    'fontWeight070': 700,
+    'fontWeight080': 800,
+    'fontWeight090': 900,
   }
 
   //from @airbnb/react-sketch
@@ -405,7 +412,7 @@ export default function () {
 
     //Font Size
     let fontSizePx = textStyle.fontSize
-    fontSizesArr.push(fontSizePx / DEFAULT_FONT_SIZE)
+    fontSizesArr.push(fontSizePx)
 
 
     let lineHeight = textStyle.lineHeight //Actual LineHeight(px) test against this to get a rem value
@@ -448,16 +455,15 @@ export default function () {
 
   //The output Object
   var fonts = {
-    fontFamily: {}
+  
   }
   
   //used for value lookups. Not the tidiest method..
   var textPrimitives = {
-    fontFamily: {},
     fontSize: {},
     lineHeight: {},
     fontWeight: {},
-    fontLetterSpacing: {}
+    letterSpacing: {}
   }
 
   fontWeightsArr = fontWeightsArr.unique().sort()
@@ -470,14 +476,14 @@ export default function () {
 
   fontFamiliesArr.forEach((fam, idx) => {
     let cfg = getCropsForFontFamily(fam)
-    let tokenName = 'fontFamily' + (idx + 1)
-    console.log(cfg)
-    fonts['fontFamily'][tokenName] = {
+    let tokenName = 'fontFamily' + tokenFormat(idx + 1)
+    
+    fonts[tokenName] = {
       'fontFamily': `${cfg.family}`,
       'cropConfig': {}
     }
 
-    fonts['fontFamily'][tokenName]['cropConfig'] = {
+    fonts[tokenName]['cropConfig'] = {
       'top': cfg.top,
       'bottom': cfg.bottom,
       'defaultLineHeight': cfg.defaultLineHeight
@@ -488,7 +494,7 @@ export default function () {
   function getCropsForFontFamily(fontFamily) {
 
     let family = fontFamily
-    let size = DEFAULT_FONT_SIZE //16px = 1rem
+    let size = DEFAULT_FONT_SIZE //16px = 1rem // set it to 1 to get it in px
 
     //Create a new text layer, we use capital T to get the cap height. 
     var text = new Text({
@@ -510,7 +516,7 @@ export default function () {
     let defaultLineHeightEm = defaultLineHeight / size
 
 
-    let bounds = textLayer.pathInFrame().bounds()
+    let bounds = textLayer.pathInFrame().bounds()   
     let t = -bounds.origin.y / size
     let b = -((defaultLineHeight - bounds.size.height) - bounds.origin.y) / size
 
@@ -538,23 +544,23 @@ export default function () {
   fontWeightsArr.forEach((value, index) => {
     let tokenName = 'fontWeight' + tokenFormat(index + 1)
     //Commented out, tokens all just sit under a {{font}} object..
-    textPrimitives['fontWeight'][tokenName] = `${value}`
-    fonts[tokenName] = `${value}`
+    textPrimitives['fontWeight'][tokenName] = value
+    fonts[tokenName] = value
   })
 
   fontSizesArr.forEach((value, index) => {
     let tokenName = 'fontSize' + tokenFormat(index + 1)
     textPrimitives['fontSize'][tokenName] = value
-    fonts[tokenName] = `${value}rem`
+    fonts[tokenName] = value
   })
 
   lineHeightsArr.forEach((value, index) => {
-    let tokenName = 'fontlineHeight' + tokenFormat(index + 1)
+    let tokenName = 'fontLineHeight' + tokenFormat(index + 1)
     textPrimitives['lineHeight'][tokenName] = value
-    fonts[tokenName] = `${value}`
+    fonts[tokenName] = value
   })
 
- textPrimitives['fontLetterSpacing'] = LETTER_SPACING
+ textPrimitives['letterSpacing'] = LETTER_SPACING
 
   fonts  = {...fonts, ...LETTER_SPACING}
 
@@ -573,7 +579,8 @@ export default function () {
     let cropProps = {}
 
     //Get the token name for the text styles
-    let n = style.name().split('/')[1]
+    
+    let n = style.name().split('/')[0].toLowerCase().includes("utility") ? style.name().split('/')[2] : style.name().split('/')[1]
 
     //Sketch has values in different places
     let textStyle = document.getSharedTextStyleWithID(style.objectID()).style
@@ -584,7 +591,7 @@ export default function () {
 
     //Size
     var fontSizePx = textStyle.fontSize
-    o.fontSize = `{{fonts.${textPrimitives.fontSize.getKeyByValue(textStyle.fontSize / DEFAULT_FONT_SIZE)}}}`
+    o.fontSize = `{{fonts.${textPrimitives.fontSize.getKeyByValue(textStyle.fontSize)}}}`
 
     cropProps.size = textStyle.fontSize / DEFAULT_FONT_SIZE
 
@@ -595,7 +602,7 @@ export default function () {
       //from: ncu-newskit/src/utils/font-sizing.ts 
       var adjLineHeightPx = (Math.round((estLineHeight * fontSizePx) / gridSize) * gridSize);
       if (adjLineHeightPx == lineHeightPx) {
-        o.lineHeight = `{{fonts.${lineHeight[0]}}`
+        o.lineHeight = `{{fonts.${lineHeight[0]}}}`
 
         cropProps.lineHeight = adjLineHeightPx / DEFAULT_FONT_SIZE
 
@@ -608,10 +615,16 @@ export default function () {
 
 
     //Font Family
-    let familyObj = Object.values(fonts.fontFamily).find(item => item.fontFamily === `${font.fontName()}`)
+    let familyObj = Object.values(fonts).find(item => item.fontFamily === `${font.fontName()}`)
 
-    let familyKey = fonts.fontFamily.getKeyByValue(familyObj)
-    o.fontFamily = `{{fonts.${familyKey}}}`
+    let familyKey = fonts.getKeyByValue(familyObj)
+    o.fontFamily = `{{fonts.${familyKey}.fontFamily}}`
+
+    //BACK UP!!
+    // let familyObj = Object.values(fonts.fontFamily).find(item => item.fontFamily === `${font.fontName()}`)
+
+    // let familyKey = fonts.fontFamily.getKeyByValue(familyObj)
+    // o.fontFamily = `{{fonts.${familyKey}}}`
 
 
     let w = FONT_WEIGHTS_NUMBER[`${weightOfFont(font)}`]
@@ -625,7 +638,8 @@ export default function () {
     
 
     let kerning = textStyle.kerning || 0
-    o.fontLetterSpacing = `{{fonts.${textPrimitives.fontLetterSpacing.getKeyByValue(kerning)}}}`
+
+    o.letterSpacing = `{{fonts.${textPrimitives.letterSpacing.getKeyByValue(kerning)}}}`
 
 
     //Calculate the font cropping
@@ -700,7 +714,7 @@ function exportFiles(){
   }
 
   try {
-    fs.writeFileSync(exportPath + 'text-styles.json', JSON.stringify(textStylesOutput, null, 4));
+    fs.writeFileSync(exportPath + 'typography-presets.json', JSON.stringify(textStylesOutput, null, 4));
   } catch (err) {
     // An error occurred
     console.error(err);

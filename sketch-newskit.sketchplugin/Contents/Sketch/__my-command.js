@@ -93,17 +93,17 @@ var exports =
 /************************************************************************/
 /******/ ({
 
-/***/ "../../../node_modules/@skpm/fs/index.js":
-/*!**************************************************!*\
-  !*** /Users/luke/node_modules/@skpm/fs/index.js ***!
-  \**************************************************/
+/***/ "./node_modules/@skpm/fs/index.js":
+/*!****************************************!*\
+  !*** ./node_modules/@skpm/fs/index.js ***!
+  \****************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 // TODO: async. Should probably be done with NSFileHandle and some notifications
 // TODO: file descriptor. Needs to be done with NSFileHandle
 var Buffer = __webpack_require__(/*! buffer */ "buffer").Buffer;
-var utils = __webpack_require__(/*! ./utils */ "../../../node_modules/@skpm/fs/utils.js");
+var utils = __webpack_require__(/*! ./utils */ "./node_modules/@skpm/fs/utils.js");
 var parseStat = utils.parseStat;
 var fsError = utils.fsError;
 var fsErrorForPath = utils.fsErrorForPath;
@@ -114,12 +114,12 @@ module.exports.constants = {
   F_OK: 0,
   R_OK: 4,
   W_OK: 2,
-  X_OK: 1
+  X_OK: 1,
 };
 
 module.exports.access = NOT_IMPLEMENTED("access");
 
-module.exports.accessSync = function(path, mode) {
+module.exports.accessSync = function (path, mode) {
   mode = mode | 0;
   var fileManager = NSFileManager.defaultManager();
 
@@ -166,7 +166,7 @@ module.exports.accessSync = function(path, mode) {
 
 module.exports.appendFile = NOT_IMPLEMENTED("appendFile");
 
-module.exports.appendFileSync = function(file, data, options) {
+module.exports.appendFileSync = function (file, data, options) {
   if (!module.exports.existsSync(file)) {
     return module.exports.writeFileSync(file, data, options);
   }
@@ -186,12 +186,12 @@ module.exports.appendFileSync = function(file, data, options) {
 
 module.exports.chmod = NOT_IMPLEMENTED("chmod");
 
-module.exports.chmodSync = function(path, mode) {
+module.exports.chmodSync = function (path, mode) {
   var err = MOPointer.alloc().init();
   var fileManager = NSFileManager.defaultManager();
   fileManager.setAttributes_ofItemAtPath_error(
     {
-      NSFilePosixPermissions: mode
+      NSFilePosixPermissions: mode,
     },
     path,
     err
@@ -210,7 +210,7 @@ module.exports.closeSync = NOT_IMPLEMENTED("closeSync");
 
 module.exports.copyFile = NOT_IMPLEMENTED("copyFile");
 
-module.exports.copyFileSync = function(path, dest, flags) {
+module.exports.copyFileSync = function (path, dest, flags) {
   var err = MOPointer.alloc().init();
   var fileManager = NSFileManager.defaultManager();
   fileManager.copyItemAtPath_toPath_error(path, dest, err);
@@ -225,7 +225,7 @@ module.exports.createWriteStream = NOT_IMPLEMENTED("createWriteStream");
 
 module.exports.exists = NOT_IMPLEMENTED("exists");
 
-module.exports.existsSync = function(path) {
+module.exports.existsSync = function (path) {
   var fileManager = NSFileManager.defaultManager();
   return Boolean(Number(fileManager.fileExistsAtPath(path)));
 };
@@ -252,7 +252,7 @@ module.exports.lchownSync = NOT_IMPLEMENTED("lchownSync");
 
 module.exports.link = NOT_IMPLEMENTED("link");
 
-module.exports.linkSync = function(existingPath, newPath) {
+module.exports.linkSync = function (existingPath, newPath) {
   var err = MOPointer.alloc().init();
   var fileManager = NSFileManager.defaultManager();
   fileManager.linkItemAtPath_toPath_error(existingPath, newPath, err);
@@ -264,7 +264,7 @@ module.exports.linkSync = function(existingPath, newPath) {
 
 module.exports.lstat = NOT_IMPLEMENTED("lstat");
 
-module.exports.lstatSync = function(path) {
+module.exports.lstatSync = function (path) {
   var err = MOPointer.alloc().init();
   var fileManager = NSFileManager.defaultManager();
   var result = fileManager.attributesOfItemAtPath_error(path, err);
@@ -278,7 +278,7 @@ module.exports.lstatSync = function(path) {
 
 module.exports.mkdir = NOT_IMPLEMENTED("mkdir");
 
-module.exports.mkdirSync = function(path, options) {
+module.exports.mkdirSync = function (path, options) {
   var mode = 0o777;
   var recursive = false;
   if (options && options.mode) {
@@ -296,7 +296,7 @@ module.exports.mkdirSync = function(path, options) {
     path,
     recursive,
     {
-      NSFilePosixPermissions: mode
+      NSFilePosixPermissions: mode,
     },
     err
   );
@@ -308,7 +308,7 @@ module.exports.mkdirSync = function(path, options) {
 
 module.exports.mkdtemp = NOT_IMPLEMENTED("mkdtemp");
 
-module.exports.mkdtempSync = function(path) {
+module.exports.mkdtempSync = function (path) {
   function makeid() {
     var text = "";
     var possible =
@@ -331,7 +331,7 @@ module.exports.read = NOT_IMPLEMENTED("read");
 
 module.exports.readdir = NOT_IMPLEMENTED("readdir");
 
-module.exports.readdirSync = function(path, options) {
+module.exports.readdirSync = function (path, options) {
   var encoding = encodingFromOptions(options, "utf8");
   var fileManager = NSFileManager.defaultManager();
   var paths = fileManager.subpathsAtPath(path);
@@ -345,7 +345,7 @@ module.exports.readdirSync = function(path, options) {
 
 module.exports.readFile = NOT_IMPLEMENTED("readFile");
 
-module.exports.readFileSync = function(path, options) {
+module.exports.readFileSync = function (path, options) {
   var encoding = encodingFromOptions(options, "buffer");
   var fileManager = NSFileManager.defaultManager();
   var data = fileManager.contentsAtPath(path);
@@ -366,7 +366,7 @@ module.exports.readFileSync = function(path, options) {
 
 module.exports.readlink = NOT_IMPLEMENTED("readlink");
 
-module.exports.readlinkSync = function(path) {
+module.exports.readlinkSync = function (path) {
   var err = MOPointer.alloc().init();
   var fileManager = NSFileManager.defaultManager();
   var result = fileManager.destinationOfSymbolicLinkAtPath_error(path, err);
@@ -383,15 +383,17 @@ module.exports.readSync = NOT_IMPLEMENTED("readSync");
 module.exports.realpath = NOT_IMPLEMENTED("realpath");
 module.exports.realpath.native = NOT_IMPLEMENTED("realpath.native");
 
-module.exports.realpathSync = function(path) {
-  return String(NSString.stringWithString(path).stringByResolvingSymlinksInPath());
+module.exports.realpathSync = function (path) {
+  return String(
+    NSString.stringWithString(path).stringByResolvingSymlinksInPath()
+  );
 };
 
 module.exports.realpathSync.native = NOT_IMPLEMENTED("realpathSync.native");
 
 module.exports.rename = NOT_IMPLEMENTED("rename");
 
-module.exports.renameSync = function(oldPath, newPath) {
+module.exports.renameSync = function (oldPath, newPath) {
   var err = MOPointer.alloc().init();
   var fileManager = NSFileManager.defaultManager();
   fileManager.moveItemAtPath_toPath_error(oldPath, newPath, err);
@@ -424,14 +426,14 @@ module.exports.renameSync = function(oldPath, newPath) {
 
 module.exports.rmdir = NOT_IMPLEMENTED("rmdir");
 
-module.exports.rmdirSync = function(path) {
+module.exports.rmdirSync = function (path) {
   var err = MOPointer.alloc().init();
   var fileManager = NSFileManager.defaultManager();
   var isDirectory = module.exports.lstatSync(path).isDirectory();
   if (!isDirectory) {
     throw fsError("ENOTDIR", {
       path: path,
-      syscall: "rmdir"
+      syscall: "rmdir",
     });
   }
   fileManager.removeItemAtPath_error(path, err);
@@ -449,13 +451,13 @@ module.exports.stat = NOT_IMPLEMENTED("stat");
 // > link, then it returns information about the link itself, not the file
 // > that it refers to.
 // http://man7.org/linux/man-pages/man2/lstat.2.html
-module.exports.statSync = function(path) {
+module.exports.statSync = function (path) {
   return module.exports.lstatSync(module.exports.realpathSync(path));
 };
 
 module.exports.symlink = NOT_IMPLEMENTED("symlink");
 
-module.exports.symlinkSync = function(target, path) {
+module.exports.symlinkSync = function (target, path) {
   var err = MOPointer.alloc().init();
   var fileManager = NSFileManager.defaultManager();
   var result = fileManager.createSymbolicLinkAtPath_withDestinationPath_error(
@@ -471,7 +473,7 @@ module.exports.symlinkSync = function(target, path) {
 
 module.exports.truncate = NOT_IMPLEMENTED("truncate");
 
-module.exports.truncateSync = function(path, len) {
+module.exports.truncateSync = function (path, len) {
   var hFile = NSFileHandle.fileHandleForUpdatingAtPath(sFilePath);
   hFile.truncateFileAtOffset(len || 0);
   hFile.closeFile();
@@ -479,14 +481,14 @@ module.exports.truncateSync = function(path, len) {
 
 module.exports.unlink = NOT_IMPLEMENTED("unlink");
 
-module.exports.unlinkSync = function(path) {
+module.exports.unlinkSync = function (path) {
   var err = MOPointer.alloc().init();
   var fileManager = NSFileManager.defaultManager();
   var isDirectory = module.exports.lstatSync(path).isDirectory();
   if (isDirectory) {
     throw fsError("EPERM", {
       path: path,
-      syscall: "unlink"
+      syscall: "unlink",
     });
   }
   var result = fileManager.removeItemAtPath_error(path, err);
@@ -500,12 +502,12 @@ module.exports.unwatchFile = NOT_IMPLEMENTED("unwatchFile");
 
 module.exports.utimes = NOT_IMPLEMENTED("utimes");
 
-module.exports.utimesSync = function(path, aTime, mTime) {
+module.exports.utimesSync = function (path, aTime, mTime) {
   var err = MOPointer.alloc().init();
   var fileManager = NSFileManager.defaultManager();
   var result = fileManager.setAttributes_ofItemAtPath_error(
     {
-      NSFileModificationDate: aTime
+      NSFileModificationDate: aTime,
     },
     path,
     err
@@ -523,7 +525,7 @@ module.exports.write = NOT_IMPLEMENTED("write");
 
 module.exports.writeFile = NOT_IMPLEMENTED("writeFile");
 
-module.exports.writeFileSync = function(path, data, options) {
+module.exports.writeFileSync = function (path, data, options) {
   var encoding = encodingFromOptions(options, "utf8");
 
   var nsdata = Buffer.from(
@@ -539,12 +541,12 @@ module.exports.writeSync = NOT_IMPLEMENTED("writeSync");
 
 /***/ }),
 
-/***/ "../../../node_modules/@skpm/fs/utils.js":
-/*!**************************************************!*\
-  !*** /Users/luke/node_modules/@skpm/fs/utils.js ***!
-  \**************************************************/
+/***/ "./node_modules/@skpm/fs/utils.js":
+/*!****************************************!*\
+  !*** ./node_modules/@skpm/fs/utils.js ***!
+  \****************************************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 module.exports.parseStat = function parseStat(result) {
   return {
@@ -578,51 +580,51 @@ module.exports.parseStat = function parseStat(result) {
     birthtime: new Date(
       Number(result.NSFileCreationDate.timeIntervalSince1970()) * 1000 + 0.5
     ),
-    isBlockDevice: function() {
+    isBlockDevice: function () {
       return result.NSFileType === NSFileTypeBlockSpecial;
     },
-    isCharacterDevice: function() {
+    isCharacterDevice: function () {
       return result.NSFileType === NSFileTypeCharacterSpecial;
     },
-    isDirectory: function() {
+    isDirectory: function () {
       return result.NSFileType === NSFileTypeDirectory;
     },
-    isFIFO: function() {
+    isFIFO: function () {
       return false;
     },
-    isFile: function() {
+    isFile: function () {
       return result.NSFileType === NSFileTypeRegular;
     },
-    isSocket: function() {
+    isSocket: function () {
       return result.NSFileType === NSFileTypeSocket;
     },
-    isSymbolicLink: function() {
+    isSymbolicLink: function () {
       return result.NSFileType === NSFileTypeSymbolicLink;
-    }
+    },
   };
 };
 
 var ERRORS = {
   EPERM: {
     message: "operation not permitted",
-    errno: -1
+    errno: -1,
   },
   ENOENT: {
     message: "no such file or directory",
-    errno: -2
+    errno: -2,
   },
   EACCES: {
     message: "permission denied",
-    errno: -13
+    errno: -13,
   },
   ENOTDIR: {
     message: "not a directory",
-    errno: -20
+    errno: -20,
   },
   EISDIR: {
     message: "illegal operation on a directory",
-    errno: -21
-  }
+    errno: -21,
+  },
 };
 
 function fsError(code, options) {
@@ -635,7 +637,7 @@ function fsError(code, options) {
       (options.path ? " '" + options.path + "'" : "")
   );
 
-  Object.keys(options).forEach(function(k) {
+  Object.keys(options).forEach(function (k) {
     error[k] = options[k];
   });
 
@@ -658,27 +660,27 @@ module.exports.fsErrorForPath = function fsErrorForPath(
   if (!doesExist) {
     return fsError("ENOENT", {
       path: path,
-      syscall: syscall || "open"
+      syscall: syscall || "open",
     });
   }
   var isReadable = fileManager.isReadableFileAtPath(path);
   if (!isReadable) {
     return fsError("EACCES", {
       path: path,
-      syscall: syscall || "open"
+      syscall: syscall || "open",
     });
   }
   if (typeof shouldBeDir !== "undefined") {
-    var isDirectory = module.exports.lstatSync(path).isDirectory();
+    var isDirectory = __webpack_require__(/*! ./index */ "./node_modules/@skpm/fs/index.js").lstatSync(path).isDirectory();
     if (isDirectory && !shouldBeDir) {
       return fsError("EISDIR", {
         path: path,
-        syscall: syscall || "read"
+        syscall: syscall || "read",
       });
     } else if (!isDirectory && shouldBeDir) {
       return fsError("ENOTDIR", {
         path: path,
-        syscall: syscall || "read"
+        syscall: syscall || "read",
       });
     }
   }
@@ -697,7 +699,7 @@ module.exports.encodingFromOptions = function encodingFromOptions(
 };
 
 module.exports.NOT_IMPLEMENTED = function NOT_IMPLEMENTED(name) {
-  return function() {
+  return function () {
     throw new Error(
       "fs." +
         name +
@@ -709,10 +711,10 @@ module.exports.NOT_IMPLEMENTED = function NOT_IMPLEMENTED(name) {
 
 /***/ }),
 
-/***/ "../../../node_modules/@skpm/path/index.js":
-/*!****************************************************!*\
-  !*** /Users/luke/node_modules/@skpm/path/index.js ***!
-  \****************************************************/
+/***/ "./node_modules/@skpm/path/index.js":
+/*!******************************************!*\
+  !*** ./node_modules/@skpm/path/index.js ***!
+  \******************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -737,7 +739,7 @@ module.exports.NOT_IMPLEMENTED = function NOT_IMPLEMENTED(name) {
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var sketchSpecifics = __webpack_require__(/*! ./sketch-specifics */ "../../../node_modules/@skpm/path/sketch-specifics.js")
+var sketchSpecifics = __webpack_require__(/*! ./sketch-specifics */ "./node_modules/@skpm/path/sketch-specifics.js")
 
 // we only expose the posix implementation since Sketch only runs on macOS
 
@@ -1244,10 +1246,10 @@ module.exports.posix = posix
 
 /***/ }),
 
-/***/ "../../../node_modules/@skpm/path/sketch-specifics.js":
-/*!***************************************************************!*\
-  !*** /Users/luke/node_modules/@skpm/path/sketch-specifics.js ***!
-  \***************************************************************/
+/***/ "./node_modules/@skpm/path/sketch-specifics.js":
+/*!*****************************************************!*\
+  !*** ./node_modules/@skpm/path/sketch-specifics.js ***!
+  \*****************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1294,8 +1296,6 @@ module.exports.resourcePath = function resourcePath(resourceName) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var sketch_ui__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! sketch/ui */ "sketch/ui");
-/* harmony import */ var sketch_ui__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(sketch_ui__WEBPACK_IMPORTED_MODULE_0__);
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
@@ -1315,18 +1315,23 @@ var Text = __webpack_require__(/*! sketch/dom */ "sketch/dom").Text;
 
 var Group = __webpack_require__(/*! sketch/dom */ "sketch/dom").Group;
 
-
 var page = MSDocument.currentDocument().currentPage();
 
-var fs = __webpack_require__(/*! @skpm/fs */ "../../../node_modules/@skpm/fs/index.js");
+var fs = __webpack_require__(/*! @skpm/fs */ "./node_modules/@skpm/fs/index.js");
 
-var path = __webpack_require__(/*! @skpm/path */ "../../../node_modules/@skpm/path/index.js");
+var path = __webpack_require__(/*! @skpm/path */ "./node_modules/@skpm/path/index.js");
 
 var home = __webpack_require__(/*! os */ "os").homedir();
 
 var doc = context.document;
 var folderName = "".concat(new Date().toISOString().replace(/[^0-9]/g, ""), "_").concat(doc.fileURL().path().lastPathComponent().replace('.sketch', ''));
-var exportPath = "".concat(home, "/SketchJSON/").concat(folderName, "/");
+var mainFolder = "".concat(home, "/NewsKit Theme Exports/");
+
+if (!fs.existsSync(mainFolder)) {
+  fs.mkdirSync(mainFolder);
+}
+
+var exportPath = "".concat(mainFolder).concat(folderName, "/");
 var texts = [];
 var paints = [];
 var shadows = [];
@@ -1377,7 +1382,7 @@ var crops = {}; // When we run the plugin.
   /* Get the primitive colors that form all the foundations */
 
   var colorStyles = getSharedStyles(0).filter(function (style) {
-    return style.name().includes('ExtendedPalette') && !style.name().includes('border');
+    return style.name().includes('Palette') && !style.name().includes('border') && !style.name().includes('_null');
   });
   colorStyles.forEach(function (style) {
     var value;
@@ -1404,7 +1409,7 @@ var crops = {}; // When we run the plugin.
 
   var regex = RegExp('(0[12345])', 'g');
   var themeColors = getSharedStyles(0).filter(function (style) {
-    return style.name().split('/')[0] && !style.name().includes('border') && !style.name().includes('Shadows') && !style.name().includes('Overlays') && !style.name().includes('Images') && !style.name().includes('ExtendedPalette');
+    return style.name().split('/')[0] && !style.name().includes('border') && !style.name().includes('Shadows') && !style.name().includes('Overlays') && !style.name().includes('Images') && !style.name().includes('Palette') && !style.name().includes('_null');
   });
   var outputThemeColors = {};
   themeColors.forEach(function (style) {
@@ -1424,7 +1429,7 @@ var crops = {}; // When we run the plugin.
       }
     }
 
-    outputThemeColors[name] = "{{colors.".concat(value, "}}");
+    value == "transparent" ? outputThemeColors["transpareent"] = "transparent" : outputThemeColors[name] = "{{colors.".concat(value, "}}");
   });
 
   function getPrimitiveFromColor(color, name) {
@@ -1577,27 +1582,27 @@ var crops = {}; // When we run the plugin.
   }; //Extract out only CSS numbers
 
   var FONT_WEIGHTS_NUMBER = {
-    '-0.8': '100',
-    '-0.6': '200',
-    '-0.4': '300',
-    '0': '400',
-    '0.23': '500',
-    '0.3': '600',
-    '0.4': '700',
-    '0.56': '800',
-    '0.62': '900'
+    '-0.8': 100,
+    '-0.6': 200,
+    '-0.4': 300,
+    '0': 400,
+    '0.23': 500,
+    '0.3': 600,
+    '0.4': 700,
+    '0.56': 800,
+    '0.62': 900
   }; //Map CSS font-weight to a NewsKit token
 
   var fontWeightTokens = {
-    'fontWeight010': '100',
-    'fontWeight020': '200',
-    'fontWeight030': '300',
-    'fontWeight040': '400',
-    'fontWeight050': '500',
-    'fontWeight060': '600',
-    'fontWeight070': '700',
-    'fontWeight080': '800',
-    'fontWeight090': '900'
+    'fontWeight010': 100,
+    'fontWeight020': 200,
+    'fontWeight030': 300,
+    'fontWeight040': 400,
+    'fontWeight050': 500,
+    'fontWeight060': 600,
+    'fontWeight070': 700,
+    'fontWeight080': 800,
+    'fontWeight090': 900
   }; //from @airbnb/react-sketch
   //Return booleans of font-style and font-stretch
 
@@ -1652,7 +1657,7 @@ var crops = {}; // When we run the plugin.
     //Font Size
 
     var fontSizePx = textStyle.fontSize;
-    fontSizesArr.push(fontSizePx / DEFAULT_FONT_SIZE);
+    fontSizesArr.push(fontSizePx);
     var lineHeight = textStyle.lineHeight; //Actual LineHeight(px) test against this to get a rem value
 
     var adjLineHeight = 0;
@@ -1683,16 +1688,13 @@ var crops = {}; // When we run the plugin.
     }
   }); //The output Object
 
-  var fonts = {
-    fontFamily: {}
-  }; //used for value lookups. Not the tidiest method..
+  var fonts = {}; //used for value lookups. Not the tidiest method..
 
   var textPrimitives = {
-    fontFamily: {},
     fontSize: {},
     lineHeight: {},
     fontWeight: {},
-    fontLetterSpacing: {}
+    letterSpacing: {}
   };
   fontWeightsArr = fontWeightsArr.unique().sort();
   fontSizesArr = fontSizesArr.unique().sort();
@@ -1700,13 +1702,12 @@ var crops = {}; // When we run the plugin.
   fontFamiliesArr = fontFamiliesArr.unique().sort();
   fontFamiliesArr.forEach(function (fam, idx) {
     var cfg = getCropsForFontFamily(fam);
-    var tokenName = 'fontFamily' + (idx + 1);
-    console.log(cfg);
-    fonts['fontFamily'][tokenName] = {
+    var tokenName = 'fontFamily' + tokenFormat(idx + 1);
+    fonts[tokenName] = {
       'fontFamily': "".concat(cfg.family),
       'cropConfig': {}
     };
-    fonts['fontFamily'][tokenName]['cropConfig'] = {
+    fonts[tokenName]['cropConfig'] = {
       'top': cfg.top,
       'bottom': cfg.bottom,
       'defaultLineHeight': cfg.defaultLineHeight
@@ -1715,7 +1716,7 @@ var crops = {}; // When we run the plugin.
 
   function getCropsForFontFamily(fontFamily) {
     var family = fontFamily;
-    var size = DEFAULT_FONT_SIZE; //16px = 1rem
+    var size = DEFAULT_FONT_SIZE; //16px = 1rem // set it to 1 to get it in px
     //Create a new text layer, we use capital T to get the cap height. 
 
     var text = new Text({
@@ -1759,20 +1760,20 @@ var crops = {}; // When we run the plugin.
   fontWeightsArr.forEach(function (value, index) {
     var tokenName = 'fontWeight' + tokenFormat(index + 1); //Commented out, tokens all just sit under a {{font}} object..
 
-    textPrimitives['fontWeight'][tokenName] = "".concat(value);
-    fonts[tokenName] = "".concat(value);
+    textPrimitives['fontWeight'][tokenName] = value;
+    fonts[tokenName] = value;
   });
   fontSizesArr.forEach(function (value, index) {
     var tokenName = 'fontSize' + tokenFormat(index + 1);
     textPrimitives['fontSize'][tokenName] = value;
-    fonts[tokenName] = "".concat(value, "rem");
+    fonts[tokenName] = value;
   });
   lineHeightsArr.forEach(function (value, index) {
-    var tokenName = 'fontlineHeight' + tokenFormat(index + 1);
+    var tokenName = 'fontLineHeight' + tokenFormat(index + 1);
     textPrimitives['lineHeight'][tokenName] = value;
-    fonts[tokenName] = "".concat(value);
+    fonts[tokenName] = value;
   });
-  textPrimitives['fontLetterSpacing'] = LETTER_SPACING;
+  textPrimitives['letterSpacing'] = LETTER_SPACING;
   fonts = _objectSpread(_objectSpread({}, fonts), LETTER_SPACING); // fontLetterSpacing.forEach((value, index) => {
   //   let tokenName = 'fontLetterSpacing' + tokenFormat(index + 1)
   //   textPrimitives['fontLetterSpacing'][tokenName] = value
@@ -1784,7 +1785,7 @@ var crops = {}; // When we run the plugin.
     var o = {};
     var cropProps = {}; //Get the token name for the text styles
 
-    var n = style.name().split('/')[1]; //Sketch has values in different places
+    var n = style.name().split('/')[0].toLowerCase().includes("utility") ? style.name().split('/')[2] : style.name().split('/')[1]; //Sketch has values in different places
 
     var textStyle = document.getSharedTextStyleWithID(style.objectID()).style;
     var font = style.value().primitiveTextStyle().attributes()[NSFont]; //Export the files used in the styles.
@@ -1792,7 +1793,7 @@ var crops = {}; // When we run the plugin.
     fontFiles.add(path.resolve(font.fileURL().path())); //Size
 
     var fontSizePx = textStyle.fontSize;
-    o.fontSize = "{{fonts.".concat(textPrimitives.fontSize.getKeyByValue(textStyle.fontSize / DEFAULT_FONT_SIZE), "}}");
+    o.fontSize = "{{fonts.".concat(textPrimitives.fontSize.getKeyByValue(textStyle.fontSize), "}}");
     cropProps.size = textStyle.fontSize / DEFAULT_FONT_SIZE; //lineHeight - Rounded to grid size
 
     var lineHeightPx = textStyle.lineHeight;
@@ -1802,18 +1803,22 @@ var crops = {}; // When we run the plugin.
       var adjLineHeightPx = Math.round(estLineHeight * fontSizePx / gridSize) * gridSize;
 
       if (adjLineHeightPx == lineHeightPx) {
-        o.lineHeight = "{{fonts.".concat(lineHeight[0], "}");
+        o.lineHeight = "{{fonts.".concat(lineHeight[0], "}}");
         cropProps.lineHeight = adjLineHeightPx / DEFAULT_FONT_SIZE;
       }
     }); // o.fontFamily = textPrimitives.fontFamily.getKeyByValue(`${font.fontName()}`) //e.g 'The Sun'
     // //o.typeName = `${font.typeName()}` // e.g 'Heavy Narrow'
     //Font Family
 
-    var familyObj = Object.values(fonts.fontFamily).find(function (item) {
+    var familyObj = Object.values(fonts).find(function (item) {
       return item.fontFamily === "".concat(font.fontName());
     });
-    var familyKey = fonts.fontFamily.getKeyByValue(familyObj);
-    o.fontFamily = "{{fonts.".concat(familyKey, "}}");
+    var familyKey = fonts.getKeyByValue(familyObj);
+    o.fontFamily = "{{fonts.".concat(familyKey, ".fontFamily}}"); //BACK UP!!
+    // let familyObj = Object.values(fonts.fontFamily).find(item => item.fontFamily === `${font.fontName()}`)
+    // let familyKey = fonts.fontFamily.getKeyByValue(familyObj)
+    // o.fontFamily = `{{fonts.${familyKey}}}`
+
     var w = FONT_WEIGHTS_NUMBER["".concat(weightOfFont(font))];
     o.fontWeight = "{{fonts.".concat(textPrimitives.fontWeight.getKeyByValue(w), "}}"); //Useful Stuff for if we want to do font families the 'right' way
     // o.fontStretch = isCondensedFont(font) ? 'condensed' : 'normal'
@@ -1821,7 +1826,7 @@ var crops = {}; // When we run the plugin.
     // o.textDecorationLine = textStyle.textUnderline ? 'underline' : 'none'
 
     var kerning = textStyle.kerning || 0;
-    o.fontLetterSpacing = "{{fonts.".concat(textPrimitives.fontLetterSpacing.getKeyByValue(kerning), "}}"); //Calculate the font cropping
+    o.letterSpacing = "{{fonts.".concat(textPrimitives.letterSpacing.getKeyByValue(kerning), "}}"); //Calculate the font cropping
 
     var cc = crops["".concat(font.fontName())];
     var deltaLineHeight = cropProps.lineHeight - cc.defaultLineHeight; // o.cropConfig = {}
@@ -1879,7 +1884,7 @@ var crops = {}; // When we run the plugin.
     }
 
     try {
-      fs.writeFileSync(exportPath + 'text-styles.json', JSON.stringify(textStylesOutput, null, 4));
+      fs.writeFileSync(exportPath + 'typography-presets.json', JSON.stringify(textStylesOutput, null, 4));
     } catch (err) {
       // An error occurred
       console.error(err);
@@ -2207,17 +2212,6 @@ module.exports = require("sketch");
 /***/ (function(module, exports) {
 
 module.exports = require("sketch/dom");
-
-/***/ }),
-
-/***/ "sketch/ui":
-/*!****************************!*\
-  !*** external "sketch/ui" ***!
-  \****************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-module.exports = require("sketch/ui");
 
 /***/ }),
 

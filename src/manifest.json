@@ -3,13 +3,13 @@
   "icon": "icon.png",
   "commands": [
     {
-      "name": "my-command",
+      "name": "Export Theme",
       "identifier": "sketch-newskit.my-command-identifier",
       "script": "./my-command.js"
     }
   ],
   "menu": {
-    "title": "sketch-newskit",
+    "title": "NewsKit JSON Export",
     "items": [
       "sketch-newskit.my-command-identifier"
     ]

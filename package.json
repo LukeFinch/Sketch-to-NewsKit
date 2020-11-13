@@ -34,6 +34,8 @@
   "dependencies": {
     "@babel/polyfill": "^7.10.1",
     "@babel/runtime": "^7.10.3",
+    "@skpm/fs": "^0.2.6",
+    "@skpm/path": "^0.1.4",
     "regenerator-runtime": "^0.13.5",
     "sketch-module-web-view": "^3.4.1"
   }

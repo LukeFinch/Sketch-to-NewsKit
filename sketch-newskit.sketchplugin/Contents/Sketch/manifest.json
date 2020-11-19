@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/sketch-hq/SketchAPI/develop/docs/sketch-plugin-manifest-schema.json",
+  "icon": "icon.png",
+  "commands": [
+    {
+      "name": "Export Theme",
+      "identifier": "sketch-newskit.my-command-identifier",
+      "script": "__my-command.js"
+    }
+  ],
+  "menu": {
+    "title": "NewsKit JSON Export",
+    "items": [
+      "sketch-newskit.my-command-identifier"
+    ]
+  },
+  "version": "0.1.0",
+  "description": "",
+  "name": "sketch-newskit",
+  "identifier": "sketch-newskit",
+  "disableCocoaScriptPreprocessor": true,
+  "appcast": "https://raw.githubusercontent.com//master/.appcast.xml",
+  "author": "LukeFinch",
+  "authorEmail": "lukechristianfinch@gmail.com"
+}

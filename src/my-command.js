@@ -198,7 +198,7 @@ export default function () {
     var result = page.children().filteredArrayUsingPredicate(predicate);
     let shadowLayer = result[0]
 
-    var shadow = shadowLayer.CSSAttributes()[1].replace('box-shadow: ', '')
+    var shadow = shadowLayer.CSSAttributes()[1].replace('box-shadow: ', '').replace(';','')
 
     layer.remove()
 
@@ -551,7 +551,7 @@ export default function () {
   fontSizesArr.forEach((value, index) => {
     let tokenName = 'fontSize' + tokenFormat(index + 1)
     textPrimitives['fontSize'][tokenName] = value
-    fonts[tokenName] = value
+    fonts[tokenName] = value + 'px'
   })
 
   lineHeightsArr.forEach((value, index) => {
